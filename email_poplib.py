@@ -1,5 +1,6 @@
 import sys, os, time, chardet
 from datetime import datetime
+from dateutil import parser
 
 import poplib, email
 from email.parser import Parser
@@ -12,6 +13,17 @@ def format_filename(str):
     str = str.replace('\\', '+').replace('"', '+').replace('|', '+')
     return str
 
+def lines2str(byte_lines):
+    str_lines = []
+    for x in byte_lines:
+        encoding = chardet.detect(x)['encoding']
+        if encoding:
+            str_lines.append(x.decode(encoding))
+        else:
+            str_lines.append(x.decode())
+    str = '\n'.join(str_lines)
+    return str
+    
 def decode_str(s):
     value, charset = decode_header(s)[0]
     if charset:
@@ -89,6 +101,8 @@ if __name__ == '__main__':
     user = sys.argv[1]
     pwd = sys.argv[2]
     pop3_server = user.split('@')[1]
+    if pop3_server == '163.com':
+        pop3_server = 'pop.163.com'
     
     t1_str = '2000-01-01 00:00:00'
     if len(sys.argv) > 3:
@@ -121,21 +135,10 @@ if __name__ == '__main__':
         os.mkdir(attach_path)
     
     for i in range(1, mails_count + 1):
-        res, byte_lines, size = server.retr(i)
-        
-        # 转码，拼接邮件内容
-        str_lines = []
-        for x in byte_lines:
-            #print(chardet.detect(x))
-            if chardet.detect(x)['encoding'] == 'GB2312':
-                str_lines.append(x.decode('GBK'))
-            else:
-                str_lines.append(x.decode())
-        mail_content = '\n'.join(str_lines)
-        
-        # 解析邮件
-        msg = Parser().parsestr(mail_content)
-        headers = get_email_headers(msg)
+        res, byte_lines, size = server.top(i, 0)
+        mail_headers = lines2str(byte_lines)
+        msg_headers = Parser().parsestr(mail_headers)
+        headers = get_email_headers(msg_headers)
         
         # 过滤
         if 'Date' not in headers:
@@ -144,7 +147,8 @@ if __name__ == '__main__':
             continue
         
         timestr = headers['Date'].split(' (')[0]
-        timedate = datetime.strptime(timestr, '%a, %d %b %Y %H:%M:%S %z')
+        #timedate = datetime.strptime(timestr, '%a, %d %b %Y %H:%M:%S %z')
+        timedate = parser.parse(timestr)
         timestamp = int(time.mktime(timedate.timetuple()))
         
         if timestamp < t1:
@@ -154,6 +158,10 @@ if __name__ == '__main__':
         
         print('')
         print(i, '/', mails_count)
+        
+        res, byte_lines, size = server.retr(i)
+        mail_body = lines2str(byte_lines)
+        msg_body = Parser().parsestr(mail_body)
         
         # 打印邮件头
         print('Subject:', headers['Subject'])
@@ -171,7 +179,7 @@ if __name__ == '__main__':
         
         timestamp = str(timestamp)
         savepath = os.path.join(attach_path, subject + '_' + timestamp)
-        attachments = get_email_attachments(msg, savepath)
+        attachments = get_email_attachments(msg_body, savepath)
         print('Attachments:', attachments)
     
     print('')

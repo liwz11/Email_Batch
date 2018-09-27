@@ -156,6 +156,7 @@ if __name__ == '__main__':
         if keyword != '' and keyword not in headers['Subject']:
             continue
         
+		# 过滤后
         print('')
         print(i, '/', mails_count)
         

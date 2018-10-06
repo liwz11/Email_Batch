@@ -96,23 +96,27 @@ def get_email_attachments(msg, savepath):
 
 if __name__ == '__main__':
     poplib._MAXLINE = 40960
+    
+    options = []
+    for i in range(0, len(sys.argv)):
+        options.append(sys.argv[i])
 
     # 账户信息
-    user = sys.argv[1]
-    pwd = sys.argv[2]
+    user = options[1]
+    pwd = options[2]
     pop3_server = user.split('@')[1]
     if pop3_server == '163.com':
         pop3_server = 'pop.163.com'
     
     t1_str = '2000-01-01 00:00:00'
-    if len(sys.argv) > 3:
-        t1_str = sys.argv[3]
+    if "-t" in options:
+        t1_str = options[options.index("-t")+1]
     t1_date = datetime.strptime(t1_str, '%Y-%m-%d %H:%M:%S')
     t1 = int(time.mktime(t1_date.timetuple()))
     
     keyword = ''
-    if len(sys.argv) > 4:
-        keyword = sys.argv[4]
+    if "-k" in options:
+        keyword = options[options.index("-k")+1]
 
     # 连接到POP3服务器
     server = poplib.POP3_SSL(pop3_server)
@@ -156,7 +160,7 @@ if __name__ == '__main__':
         if keyword != '' and keyword not in headers['Subject']:
             continue
         
-		# 过滤后
+        # 过滤后
         print('')
         print(i, '/', mails_count)
         

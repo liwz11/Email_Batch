@@ -16,6 +16,7 @@ options:
 
 Example:
 
+python email_poplib.py test@mails.tsinghua.edu.cn test123456
 python email_poplib.py test@mails.tsinghua.edu.cn test123456 -t '2018-09-25 00:00:00'
 python email_poplib.py test@mails.tsinghua.edu.cn test123456 -k '中期材料'
 python email_poplib.py test@mails.tsinghua.edu.cn test123456 -t '2018-09-25 00:00:00' -k '中期材料'
